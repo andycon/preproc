@@ -3,7 +3,18 @@
 subj=$1
 subj=sub-rid0000${subj}
 
+
+
+code_dir=`pwd`
+
 dpath=../../../$subj # datapath for this subject
+cd ../../../
+### First get the data from Datalad
+datalad get $subj
+
+cd ${code_dir}
+
+
 opath=../$subj # output directory
 tr=2.0
 # make the output directory
