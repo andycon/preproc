@@ -4,18 +4,29 @@ subj=$1
 subj=sub-rid0000${subj}
 
 
+# Change the value of 'cleanup' to 1, if you want to delete all intermediate files
+# created by this script. It is recommended to visually inspect your data to
+# make sure that everythi9ng is working ok throughout the processing steps. ONce
+# you are confident that this are all good, then cleanup as you wish to save
+# space. This processing script takes just 5 or so minutes to complete, so it is
+# not a big loss if you have to do it all over again..
+cleanup=1
+
+# Likewise change dropDataladData to 1 to also clear out the downloaded data in
+# the parent dataset
+dropDataladData=1
 
 code_dir=`pwd`
 
 dpath=../../../$subj # datapath for this subject
-cd ../../../
-### First get the data from Datalad
-datalad get $subj
+opath=../$subj # output directory
 
+### First get the data from Datalad
+cd ../../../
+datalad get $subj
 cd ${code_dir}
 
 
-opath=../$subj # output directory
 tr=2.0
 # make the output directory
 mkdir $opath 
@@ -43,6 +54,7 @@ do
 done
 
 echo $runs
+
 
 
 # ================================= tshift =================================
@@ -173,10 +185,25 @@ do
         -bucket $out_fn
 
 done
-STOP
 
 for run in $runs
 do
     3dbucket -prefix ${opath}/tstats_$run ${opath}/stats.${run}.nii.gz'[2..59(3)]'
 done
 
+if [ $cleanup -eq 1 ]
+then
+    bash cleanup_preproc.sh $subj $dropDataladData
+else
+    echo "*************************************************************"
+    printf "\n\n All results, including many intermediate datasets are in \n
+    $opath. Go there and use afni to check your results. If you don't want \n
+    all that extra stuff hanging around, consider changing the \n
+    value of 'cleanup' to 1 at the top of the script. Likewise for \n
+    dropDataladData.  Why keep it if you don't need it? For now, you can clean \n
+    up $opath (and Datalad data) from the command line by running: \n
+    'bash cleanup_preproc.sh $subj 1', or leave it if, suite yourself.\n\n"
+    echo "============================================================"
+
+
+fi
