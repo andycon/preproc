@@ -1,37 +1,20 @@
 s=$1 
-d=$2
 
-dlad=`du -h -d 0 ../../../.git | awk '{print $1}'`
 prep=`du -h -d 0 ../${s} | awk '{print $1}'`
 
-echo $dlad $prep
-
-echo $s $d
 cd ../${s}
-rm __*
-rm rm*
-rm fitts*
-rm errts*
-rm st*
-rm X*
-rm -fR motion_params
-rm -fR slicetimes
-rm -fR stimuli
-rm full*
-rm vr*
-rm epi_mu_al+*
+chmod u+w *
+rm *orig*
+rm *1D
+rm epi*
+rm T1w.nii.gz
 
+# copy T1w_USAQ+tlrc to a nifti file for mass consumption.
+3dcalc -prefix T1w_USAQ.nii.gz -a T1w_USAQ+tlrc -expr 'a' 
 
-if [ "$d" -eq "1" ]
-then
-    datalad drop ../../../${s}
-fi
+rm *tlrc*
 
-dlad_c=`du -h -d 0 ../../../.git | awk '{print $1}'`
 prep_c=`du -h -d 0 ../${s} | awk '{print $1}'`
-
-# The rest of This is just for fun
-# and for providing examples of how to write and use functions in BASH
 
 # Function that takes a size such as 234K, 654G, 456.34M, etc,
 # and prints the value in Bytes
@@ -58,10 +41,10 @@ bytize () {
     echo $sgd $omag | awk '{print $1*$2}'
 }
 
-# Function that takes 4 integer inputs and adds the first two and subtracts the
-# 3rd and 4th, and also prints the Order of Magnitude, KiloBytes, etc.
+# Function that takes 2 integer inputs and subtracts the
+# 2nd from the 1st, and also prints the Order of Magnitude, KiloBytes, etc.
 comput () {
-    s=`echo $1 $2 $3 $4 | awk '{print $1+$2-$3-$4}'`
+    s=`echo $1 $2 | awk '{print $1-$2}'`
     n=${#s}
     p=Bytes
     round=0
@@ -84,12 +67,10 @@ comput () {
 }
 
 # How much disk space did you save by running this program?
-a=`bytize $dlad`
-b=`bytize $prep`
-c=`bytize $dlad_c`
-d=`bytize $prep_c`
+a=`bytize $prep`
+b=`bytize $prep_c`
 
-howmuch=`comput $a $b $c $d`
+howmuch=`comput $a $b`
 echo "******************************************************"
 printf "\n\tThanks for cleaning up your mess. You saved 
         $howmuch of precious diskspace. Not bad.\n\n"

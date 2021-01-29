@@ -1,8 +1,19 @@
-#!/bin/bash
-
+#################################################################################
+#
+#   preproc_funcs.sh
+#
+#   Usage: bash preproc_funcs.sh SUBJ
+#
+################################################################################
 subj=$1
 subj=sub-rid0000${subj}
+anat=T1w.nii.gz
 
+if [ ${#1} -eq 0 ]
+then
+    head -n 7 preproc_funcs.sh
+    exit 55
+fi
 
 # Change the value of 'cleanup' to 1, if you want to delete all intermediate files
 # created by this script. It is recommended to visually inspect your data to
@@ -10,7 +21,7 @@ subj=sub-rid0000${subj}
 # you are confident that this are all good, then cleanup as you wish to save
 # space. This processing script takes just 5 or so minutes to complete, so it is
 # not a big loss if you have to do it all over again..
-cleanup=1
+cleanup=0
 
 # Likewise change dropDataladData to 1 to also clear out the downloaded data in
 # the parent dataset
@@ -30,7 +41,7 @@ cd ${code_dir}
 tr=2.0
 # make the output directory
 mkdir $opath 
-cp ${dpath}/anat/${subj}_T1w.nii.gz ${opath}/T1w.nii.gz
+cp ${dpath}/anat/${subj}_$anat ${opath}/$anat
 # set list of run numbers
 runNums=`count -digits 1 1 5`
 
@@ -55,16 +66,13 @@ done
 
 echo $runs
 
-
-
 # ================================= tshift =================================
 # time shift data so all slice timing is the same 
 step=01
 stpath=$opath/slicetimes
 mkdir $stpath
 for run in $runs 
-do
-    
+do  
     python get_slicetimes.py $subj $run $stpath 
     in_fn=${dpath}/func/${subj}_task-${run}_bold.nii.gz
     out_fn=${opath}/st${step}.$run.tshift
@@ -92,6 +100,13 @@ do
              -1Dfile $mp_path/$run.1D \
              -prefix $out_fn -cubic $in_fn
 done
+
+# Save a mean volume of motion-corrected EPI for use in registering to
+# anatomy
+
+out_fn=$opath/st02.beh_run-1.volreg
+ 
+3dTstat -mean -prefix $opath/epi_mu $out_fn+orig
 
 # ================================== blur ==================================
 # blur each volume of each run
@@ -191,6 +206,36 @@ do
     3dbucket -prefix ${opath}/tstats_$run ${opath}/stats.${run}.nii.gz'[2..59(3)]'
 done
 
+######################### Align EPI mean to original T1 ########################
+#
+# Nota bene: argument "-keep_rm_files". This keeps all intermediate files
+# including a T1w anatomical image that is aligned to the motion-corrected EPI
+# data, i.e. the EPI mean saved earlier. We rename the tempfile as T1w_a2e+orig,
+# using "a2e" representing "Anatomical to EPI".  This is useful for viewing the
+# preprocessing results in native EPI space. In the next step, we will align the
+# original T1w image to an MNI template, and then use the EPI to ANAT
+# transformation to align the EPI data to the MNI template.
+#
+# So in this step we have: 
+#   1 epi_mu+orig -align-to-> T1w+orig :yield:-> epi_mu_e2a+orig (T1w+orig space) 
+#   2 T1w+orig    ----------> epi_mu+orig ::::-> T1w_a2e+orig    (EPI+orig space)
+#   
+# In the next step using the separate alignment script, we will have:
+#   3 T1w+orig    ----------> MNI_template :::-> T1w_A+tlrc    (MNI space)
+#   4 T1w_a2m+tlrc ~~QWarp~~> MNI_template :::-> T1w_AQ+tlrc   (MNI space)
+#   
+# And finally we use the transformations ("delta-n", Dn) from n steps 1,3,4 to
+# register and non-linearly warp all EPI results to MNI space, thus:
+#   5 <EPI>+orig -D1-> <EPI>_a2e+orig -D3-> <EPI>_A+tlrc -D4-> <EPI>_AQ+tlrc
+#
+#################################################################################
+cd $opath
+align_epi_anat.py -anat $anat -epi epi_mu+orig \
+      -epi_base 0 -epi2anat -big_move -keep_rm_files
+3dcalc -prefix T1w_a2e -a __tt_T1w_al+orig -expr 'a'
+
+cd $code_dir
+
 if [ $cleanup -eq 1 ]
 then
     bash cleanup_preproc.sh $subj $dropDataladData
@@ -202,7 +247,7 @@ else
     value of 'cleanup' to 1 at the top of the script. Likewise for \n
     dropDataladData.  Why keep it if you don't need it? For now, you can clean \n
     up $opath (and Datalad data) from the command line by running: \n
-    'bash cleanup_preproc.sh $subj 1', or leave it if, suite yourself.\n\n"
+    'bash cleanup_preproc.sh $subj 1', or not. Suite yourself.\n\n"
     echo "============================================================"
 
 
