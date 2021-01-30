@@ -14,8 +14,15 @@ fi
 sub=$1
 cd ../sub-rid0000${sub}
 
-afni_path=$HOME/bin/abin
-epi=st02.beh_run-1.volreg+orig
+afni_path=`which afni | awk -F "/afni" '{print $1}'`
+if [ $afni_path -eq "afni not found" ]
+then
+    echo "Where's Afni? Afni appears to not be installed."
+    exit 55
+fi
+
+
+
 anat=T1w.nii.gz
 temp="${afni_path}/MNI152_2009_template_SSW.nii.gz"
 masks="${afni_path}/MNI_Glasser_HCP_v1.0.nii.gz"
@@ -26,9 +33,9 @@ masks="${afni_path}/MNI_Glasser_HCP_v1.0.nii.gz"
 #   translation, rotation, stretching, and shearing
 #
 
-#3dUnifize -input ${anat} -prefix T1w_U
+3dUnifize -input ${anat} -prefix T1w_U
 
-#3dSkullStrip -input T1w_U+orig -prefix T1w_US -niter 400 -ld 40
+3dSkullStrip -input T1w_U+orig -prefix T1w_US -niter 400 -ld 40
 
 3dAllineate -prefix T1w_USA -base $temp    \
             -source T1w_US+orig -twopass -cost lpa \
