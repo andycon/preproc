@@ -15,12 +15,13 @@ sub=$1
 cd ../sub-rid0000${sub}
 
 afni_path=`which afni | awk -F "/afni" '{print $1}'`
-if [ $afni_path -eq "afni not found" ]
+
+
+if [[ "$afni_path" == "afni not found" ]]
 then
     echo "Where's Afni? Afni appears to not be installed."
     exit 55
 fi
-
 
 
 anat=T1w.nii.gz
@@ -69,6 +70,9 @@ do
          -master T1w_USAQ_WARP+tlrc -newgrid 3.0                          \
          -prefix Q${pref}.nii.gz
 done
+
+# ==================== Save Q-Warped brain as nifti ========================
+3dcalc -prefic T1w_USAQ.nii.gz -a T1w_USAQ+tlrc -expr 'a'
 
 # ==================== Make some masks =====================================
 
