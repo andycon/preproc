@@ -1,3 +1,12 @@
+################################################################################
+#
+#   Usage: bash preproc_all.sh goforit
+# 
+#   without 'goforit', the code will not execute, and you will see this message.
+# 
+#   Please read next section carefully before going for it.
+#
+#
 #################################### Bash 101 ##################################
 #
 #   FOR loop for iterating across subjects and processing each subject in turn
@@ -10,14 +19,13 @@
 #   one-at-a-time to the variable $s for doing the DO section.   
 #
 #   The second part of the preproc_funcs call is optional:
-#       > $s.preproc.log 2>&1
+#       > logs/$s.preproc.log 2>&1
 #   
 #   The greater-than symbol > redirects standard output stdout to a file (or bit
-#   stream) here named $s.preproc.log. The $s is the aforementioned subject
-#   variable, so if $s was 01 the file name resolves to 01.preproc.log, and
-#   because there is no path preceding the output file, it will be written to
-#   the present working
-#   directory <pwd>. 
+#   stream) here named $s.preproc.log in the newly created subdirectory logs.
+#   The $s is the aforementioned subject variable, so if $s was 01 the file name
+#   resolves to 01.preproc.log, and because there is no path preceding the
+#   output file, it will be written to the present working directory <pwd>. 
 #   
 #   The next part:
 #       2>$1
@@ -48,9 +56,16 @@
 #   1612376108 SSE
 #
 ################################################################################   
-subs="01 12 17 24 27 31 32 33 34 36 37 41"
+if [ "$1" != "goforit" ]
+then
+    less preproc_all.sh
+else
+    mkdir logs > /dev/null 2>&1
 
-for s in $subs
-do
-    bash preproc_funcs.sh $s > $s.preproc.log 2>&1 &
-done
+    subs="01 12 17 24 27 31 32 33 34 36 37 41"
+
+    for s in $subs
+    do
+        bash preproc_funcs.sh $s > $s.preproc.log 2>&1 &
+    done
+fi
