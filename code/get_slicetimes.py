@@ -3,7 +3,6 @@ import sys
 
 sub = sys.argv[1]
 run = sys.argv[2]
-opath = sys.argv[3]
 
 fn="../../../{}/func/{}_task-{}_bold.json".format(sub,sub,run)
 info = json.load(open(fn))
