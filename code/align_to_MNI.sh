@@ -14,14 +14,17 @@ fi
 sub=$1
 cd ../sub-rid0000${sub}
 
-afni_path=`which afni | awk -F "/afni" '{print $1}'`
+#afni_path=`which afni | awk -F "/afni" '{print $1}'`
+afni_path=`which afni`
+n=${#afni_path}
+n=$(( $n - 4 ))
+afni_path=${afni_path:0:$n}
 
-
-if [[ "$afni_path" == "afni not found" ]]
-then
-    echo "Where's Afni? Afni appears to not be installed."
-    exit 55
-fi
+#if [[ "$afni_path" == "afni not found" ]]
+#then
+#    echo "Where's Afni? Afni appears to not be installed."
+#    exit 55
+#fi
 
 
 anat=T1w.nii.gz
