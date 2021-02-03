@@ -21,7 +21,7 @@ fi
 # you are confident that this are all good, then cleanup as you wish to save
 # space. This processing script takes just 5 or so minutes to complete, so it is
 # not a big loss if you have to do it all over again..
-cleanup=0
+cleanup=1
 
 # Likewise change dropDataladData to 1 to also clear out the downloaded data in
 # the parent dataset
