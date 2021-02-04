@@ -66,7 +66,7 @@ else
  
     for s in $subs 
     do 
-        bash align_to_MNI.sh $s >> logs/$s.preproc.log 2>&1 & 
+        bash align_to_MNI.sh $s >> logs/$s.align.log 2>&1 & 
     done
 fi
 
