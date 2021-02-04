@@ -14,6 +14,9 @@ fi
 sub=$1
 cd ../sub-rid0000${sub}
 
+# This might help fix path issues 
+# or not? PATH=/optnfs/afni/2017_10_2:$PATH
+
 #afni_path=`which afni | awk -F "/afni" '{print $1}'`
 afni_path=`which afni`
 n=${#afni_path}
@@ -26,7 +29,7 @@ afni_path=${afni_path:0:$n}
 #    exit 55
 #fi
 
-
+echo $afni_path
 anat=T1w.nii.gz
 temp="${afni_path}/MNI152_2009_template_SSW.nii.gz"
 masks="${afni_path}/MNI_Glasser_HCP_v1.0.nii.gz"

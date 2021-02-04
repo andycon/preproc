@@ -55,19 +55,24 @@
 #   1612386164 SSE
 #
 ################################################################################
+msg="...going for it.."
+echo goforit
+echo
 if [ "$1" != "goforit" ]
 then
     less align_all.sh
 else
-
     mkdir logs > /dev/null 2>&1
 
     subs="01 12 17 24 27 31 32 33 34 36 37 41" 
  
     for s in $subs 
     do 
-        bash align_to_MNI.sh $s >> logs/$s.align.log 2>&1 & 
+        msg=${msg}..${s}.
+        printf $msg
+        bash align_to_MNI.sh $s >> logs/$s.align.log 2>&1  
     done
 fi
+printf \finDuMonde
 
 

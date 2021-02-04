@@ -32,11 +32,15 @@ code_dir=`pwd`
 dpath=../../../$subj # datapath for this subject
 opath=../$subj # output directory
 
+module rm python/2.7-Anaconda
+module load python/3-Anaconda
+echo ">>>>>>>>>>>>"
+which git-annex
+
 ### First get the data from Datalad
 cd ../../../
 datalad get $subj
 cd ${code_dir}
-
 
 tr=2.0
 # make the output directory

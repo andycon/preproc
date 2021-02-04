@@ -14,9 +14,6 @@ rm fitts*
 rm errts*
 rm st*
 rm X*
-rm -fR motion_params
-rm -fR slicetimes
-rm -fR stimuli
 rm full*
 rm vr*
 rm epi_mu_al+*
