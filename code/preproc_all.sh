@@ -60,19 +60,16 @@ if [ "$1" != "goforit" ]
 then
     less preproc_all.sh
 else
-    #mkdir logs > /dev/null 2>&1
 
     subs="01 12 17 24 27 31 32 33 34 36 37 41"
-
-    echo "=========================" >> preproc_jobs
-    date >> preproc_jobs
-    echo "+++++++++++++++++++++++++" >> preproc_jobs
-
+    echo "========================="
+    echo ">>    preproc_jobs     <<"
+    echo "+++++++++++++++++++++++++"
+    echo $subs
+    
     for s in $subs
     do
-        bash makejob.sh preproc_funcs.sh $s > prep_${s}.job
-        job_id=`mksub prep_${s}.job`
-        echo $s $job_id >> preproc_jobs
-        #preproc_funcs.sh $s > logs/$s.preproc.log 2>&1 
+        bash preproc_funcs.sh $s # one at a time
+        
     done
 fi
