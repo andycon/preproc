@@ -135,6 +135,9 @@
     git clone https://github.com/andycon/mvpc.git
     
     Then go into the code directory and type:
+        cd mvpc
+        echo "sub_*" > .gitignore # similar to before, don't git track datafiles
+        echo "group*" >> .gitignore # note the >> as opposed to >
         cd code
         less README 
 
