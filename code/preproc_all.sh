@@ -85,7 +85,11 @@ else
     
     for s in $subs
     do
-        bash preproc_funcs.sh $s # one at a time
+        echo "========================="
+        echo ">>    preproc SUB $s   <<"
+        echo "+++++++++++++++++++++++++"
+     
+        bash preproc_funcs.sh $s > $.prep.log 2>&1 & # one at a time
         
     done
 fi

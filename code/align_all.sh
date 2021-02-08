@@ -64,7 +64,7 @@ else
  
     for s in $subs 
     do 
-        bash align_to_MNI.sh $s # One a time. See preproc_all Bash 101 to speed
+        bash align_to_MNI.sh $s > $s.align.log 2>&1 & # One a time. See preproc_all Bash 101 to speed
                                 # things up.
     done
 fi

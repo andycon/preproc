@@ -1,0 +1,142 @@
+# Tutorial 1: Preprocessing
+
+    The scripts provided in this repository were written to accompany Professor
+    Jim Haxby's Computational Methods graduate class, Dartmouth College,
+    Department of Psychological and Brain Sciences, Winter 2021. This first
+    installation is for preprocessing the data needed to complete Assigment 1.
+    The dataset for the assigment is from: 
+
+    Nastase Samuel A., Halchenko Yaroslav O., Connolly Andrew C., Gobbini
+    M. Ida, Haxby James V. Neural Responses to Naturalistic Clips of Behaving
+    Animals in Two Different Task Contexts. Frontiers in Neuroscience (12) 2018.
+    https://www.frontiersin.org/article/10.3389/fnins.2018.00316
+    DOI=10.3389/fnins.2018.00316
+
+
+
+## Step 0: Get the data with Datalad
+
+    Before doing anything, get the data. Install Datalad, if its not install
+    already. Then open a terminal (Linux, Mac, or any nux), and type:
+
+    datalad get https://openneuro.org/datasets/ds000233
+
+    This will create an empty "skeleton" of the dataset, including all of the
+    files except none of the data. See the Datalad handbook to learn more.
+
+## Step 1: Checkout this repository using Git
+
+    Go into the directory for the dataset and navigate to the derivative folder:
+
+    cd ds000233/derivatives
+
+    Because you are now in a Datalad repository, you are also in a Git
+    repository, and you are about to add stuff, so to keep things neat, you can
+    tell git (with respect to the dataset ds000233) to ignore everything you are
+    about to do by typing:
+
+        echo "preproc/" > .gitignore
+        git add .
+        git commit -m"Ignoreing everything in preproc"
+
+    Now clone this repository. (Note that if you are reading this you have
+    already done this, and well, maybe it's already in the right place. In that
+    case go on to step 2.) The code "as is" is made to run from the preproc
+    folder in the derivatives subdirectory of ds000233. If you want to run it
+    from somewhere else, feel free, except that you will have to update all of
+    your path definitions.  Colne the repository using:
+
+        git clone https:/github.com/andycon/preproc.git
+
+    To ensure that you don't track any preprocessed data with git type:
+
+    Then cd into the preproc directory:
+
+        cd preproc
+
+    To ensure that you don't track any preprocessing data with Git type:
+        echo "sub-*" > .gitignore
+        
+
+## Step 3: Run the preprocessing 
+
+    First read through the file preproc_funcs.sh. This is a Bash script that
+    will preprocess one subject at a time using AFNI. (Note: you will need a
+    working installation of AFNI before you begin.) You can preprocess a single
+    subject by running the script by typing:
+
+    Option 1. 
+        bash preproc_funcs.sh 01
+
+        or just:
+
+        ./preproc_funcs.sh 01
+
+        Either of these will preprocess all functional data for subject '01'. Be
+        sure to see the information about the "cleanup_preproc.sh" option. Using
+        this will remove all intermediate files at the end of the preprocessing
+        script and will save valuable space on your hard drive.
+
+    Option 2.
+        bash preproc_all.sh
+
+        This script can take care of preprocessing all of the subjects. See the
+        information in the preproc_all.sh file for more on how to do this, and
+        for more options. 
+
+        Optional Note: Running all of your subjects in a row with one process
+        can take a long time. If you choose to try this on Discovery, you may
+        find that your ssh connection times out. To avoid this, you can use the
+        program "screen" to disconnect from an open shell session, so that your
+        process will keep running even after you disconnect from Discovery. 
+
+        Type:
+            screen -S preproc_all
+
+            this will open a new virtual terminal. You may need to reload any
+            modules:
+
+            i.e., 
+                module load python/3-Anaconda
+                module load afni/2020_12_07
+
+            Once you've started your long-running set of processes, you can
+            disconnect from your virtual screen by typing:
+
+                <CTL>-A D
+
+            You can see the name of your disconnected screen by typing:
+
+                screen -list
+
+            And reconnect by typing:
+                
+                screen -r preproc_all<screenID>
+
+## Step 4: Run the Alignment script.
+
+    Once you have successfully preprocessed all the functional data, use the
+    align_all.sh to align all subjects to a common MNI space. See the script
+    align_to_MNI.sh, and align_all.sh for details.
+
+## Step 5: Start the MVPC section
+
+    You can start the Multivariate Pattern Classification portion of the
+    tutorial once all of the data is preprocessed and aligned. Use AFNI, or
+    another fMRI visualization tool to inspect your data and make sure everythin
+    is ok.
+
+    If everything is ok, move back to the derivatives folder:
+
+    cd ../../
+
+    and clone the mvpc repository:
+
+    git clone https://github.com/andycon/mvpc.git
+    
+    Then go into the code directory and type:
+        cd code
+        less README 
+
+    for more instructions.
+
