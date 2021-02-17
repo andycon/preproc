@@ -1,4 +1,5 @@
 import sys
+import glob
 
 s = sys.argv[1]
 
@@ -37,3 +38,31 @@ for task in ["beh","tax"]:
             f.write("{}\n".format(times.strip()))
             f.close()
 
+# Now for each condition lets make a stimtimes file for all ten runs. This is
+# just the same as for individual runs, except instead of just one row of times
+# indicating the onsets of the stimuli in just one run, each file will contain
+# ten rows, one row for each run.
+
+conds = stims['beh'][1].keys()  # Note: The stims dict for each condition and run
+                                # should contain a list of the all 20 conditions
+for c in conds:
+    allruns_fn = "../{}/stimuli/{}_allruns.1D".format(s,c)  # filename for allruns
+                                                    # stimfile
+    print("\n.......>>>>> {}\n".format(c))
+    print("<> Python glob.glob returns unsorted list of filenames")
+    print("-----> matching pattern:\n")
+    files = glob.glob("../{}/stimuli/*{}.1D".format(s,c))
+    for f in files:
+        print(f)
+    files.sort()
+    print("\n<> Python list.sort is used to sort the filenames\n ----> Sorted:\n")
+    for f in files:
+        print(f)
+
+    print("\n<> Saving stimtimes for {} for all runs in {}".format(c,allruns_fn))
+    allruns = open(allruns_fn,'w')
+    for f in files:
+        allruns.write(open(f).read())
+    allruns.close()
+
+        
