@@ -72,10 +72,11 @@ do
     pref=`echo $tstat | awk -F + '{print $1}'`
 
     3dNwarpApply -source $tstat                                \
-         -nwarp "T1w_USAQ_WARP+tlrc T1w_USA.aff12.1D epi_mu_al_reg_mat.aff12.1D"                 \
+         -nwarp "T1w_USAQ_WARP+tlrc T1w_USA.aff12.1D epi_mu_al_reg_mat.aff12.1D" \
          -master T1w_USAQ_WARP+tlrc -newgrid 3.0                          \
          -prefix Q${pref}.nii.gz
 done
+
 
 # ==================== Save Q-Warped brain as nifti ========================
 3dcalc -prefic T1w_USAQ.nii.gz -a T1w_USAQ+tlrc -expr 'a'

@@ -89,7 +89,7 @@ else
         echo ">>    preproc SUB $s   <<"
         echo "+++++++++++++++++++++++++"
      
-        bash preproc_funcs.sh $s > $.prep.log 2>&1 & # one at a time
+        bash preproc_funcs.sh $s > $s.prep.log 2>&1  # one at a time
         
     done
 fi

@@ -1,3 +1,4 @@
 sub-*
 *.err
 code/.*
+*.log

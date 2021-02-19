@@ -17,7 +17,7 @@ fi
 
 # Change the value of 'cleanup' to 1, if you want to delete all intermediate files
 # created by this script. It is recommended to visually inspect your data to
-# make sure that everythi9ng is working ok throughout the processing steps. ONce
+# make sure that everything is working ok throughout the processing steps. ONce
 # you are confident that this are all good, then cleanup as you wish to save
 # space. This processing script takes just 5 or so minutes to complete, so it is
 # not a big loss if you have to do it all over again..
@@ -32,10 +32,10 @@ code_dir=`pwd`
 dpath=../../../$subj # datapath for this subject
 opath=../$subj # output directory
 
-module rm python/2.7-Anaconda
-module load python/3-Anaconda
-echo ">>>>>>>>>>>>"
-which git-annex
+#module rm python/2.7-Anaconda
+#module load python/3-Anaconda
+#echo ">>>>>>>>>>>>"
+#which git-annex
 
 ### First get the data from Datalad
 cd ../../../
@@ -51,6 +51,7 @@ runNums=`count -digits 1 1 5`
 
 # list of tasks
 tasks="beh tax"
+
 
 # create stimuli directory
 spath=${opath}/stimuli
@@ -166,13 +167,53 @@ do
            -demean -write $out_fn
 done
 
+
+######################### Align EPI mean to original T1 ########################
+#
+# Nota bene: argument "-keep_rm_files". This keeps all intermediate files
+# including a T1w anatomical image that is aligned to the motion-corrected EPI
+# data, i.e. the EPI mean saved earlier. We rename the tempfile as T1w_a2e+orig,
+# using "a2e" representing "Anatomical to EPI".  This is useful for viewing the
+# preprocessing results in native EPI space. In the next step, we will align the
+# original T1w image to an MNI template, and then use the EPI to ANAT
+# transformation to align the EPI data to the MNI template.
+#
+# So in this step we have: 
+#   1 epi_mu+orig -align-to-> T1w+orig :yield:-> epi_mu_e2a+orig (T1w+orig space) 
+#   2 T1w+orig    ----------> epi_mu+orig ::::-> T1w_a2e+orig    (EPI+orig space)
+#   
+# In the next step using the separate alignment script, we will have:
+#   3 T1w+orig    ----------> MNI_template :::-> T1w_A+tlrc    (MNI space)
+#   4 T1w_a2m+tlrc ~~QWarp~~> MNI_template :::-> T1w_AQ+tlrc   (MNI space)
+#   
+# And finally we use the transformations ("delta-n", Dn) from n steps 1,3,4 to
+# register and non-linearly warp all EPI results to MNI space, thus:
+#   5 <EPI>+orig -D1-> <EPI>_a2e+orig -D3-> <EPI>_A+tlrc -D4-> <EPI>_AQ+tlrc
+#
+#################################################################################
+cd $opath
+align_epi_anat.py -anat $anat -epi epi_mu+orig \
+      -epi_base 0 -epi2anat -big_move -keep_rm_files
+3dcalc -prefix T1w_a2e -a __tt_T1w_al+orig -expr 'a'
+
+3dcalc -a T1w_a2e+orig -prefix __brain_mask_a2e -expr 'step(a)'
+3dresample -prefix __brain_mask -master epi_mu+orig -input __brain_mask_a2e+orig
+3dcalc -a __brain_mask+orig -b full_mask+orig -prefix __bm -expr 'step(a+b)'
+# make a dilated version of brain mask
+3dcalc -a __bm+orig -prefix brain_mask                     \
+             -b a+i -c a-i -d a+j -e a-j -f a+k -g a-k     \
+             -expr 'amongst(1,a,b,c,d,e,f,g)'
+
+cd $code_dir
+
+
 # ------------------------------
 # run the regression analysis
 # We will do this for each run separately to
 # prepare data for MVPA run-wise crossvalidation
 
 Rmodel="WAV(2)" # "TENT(0,14,7)"
-mask=$opath/full_mask+orig.HEAD
+mask=$opath/brain_mask+orig.HEAD
 
 for run in $runs
 do
@@ -210,36 +251,52 @@ do
     3dbucket -prefix ${opath}/tstats_$run ${opath}/stats.${run}.nii.gz'[2..59(3)]'
 done
 
-######################### Align EPI mean to original T1 ########################
-#
-# Nota bene: argument "-keep_rm_files". This keeps all intermediate files
-# including a T1w anatomical image that is aligned to the motion-corrected EPI
-# data, i.e. the EPI mean saved earlier. We rename the tempfile as T1w_a2e+orig,
-# using "a2e" representing "Anatomical to EPI".  This is useful for viewing the
-# preprocessing results in native EPI space. In the next step, we will align the
-# original T1w image to an MNI template, and then use the EPI to ANAT
-# transformation to align the EPI data to the MNI template.
-#
-# So in this step we have: 
-#   1 epi_mu+orig -align-to-> T1w+orig :yield:-> epi_mu_e2a+orig (T1w+orig space) 
-#   2 T1w+orig    ----------> epi_mu+orig ::::-> T1w_a2e+orig    (EPI+orig space)
-#   
-# In the next step using the separate alignment script, we will have:
-#   3 T1w+orig    ----------> MNI_template :::-> T1w_A+tlrc    (MNI space)
-#   4 T1w_a2m+tlrc ~~QWarp~~> MNI_template :::-> T1w_AQ+tlrc   (MNI space)
-#   
-# And finally we use the transformations ("delta-n", Dn) from n steps 1,3,4 to
-# register and non-linearly warp all EPI results to MNI space, thus:
-#   5 <EPI>+orig -D1-> <EPI>_a2e+orig -D3-> <EPI>_A+tlrc -D4-> <EPI>_AQ+tlrc
-#
-#################################################################################
-cd $opath
-align_epi_anat.py -anat $anat -epi epi_mu+orig \
-      -epi_base 0 -epi2anat -big_move -keep_rm_files
-3dcalc -prefix T1w_a2e -a __tt_T1w_al+orig -expr 'a'
+############### Now run GLM for ALLRUNS at once ##############
 
-cd $code_dir
+Rmodel="WAV(2)" 
+mask=$opath/brain_mask+orig.HEAD
 
+
+out_fn=$opath/stats.allruns.nii.gz
+stims=`ls $opath/stimuli/*allruns.1D`
+stim_arg=""
+s=1
+for stim in $stims
+do
+    lab=`echo $stim | awk -F / '{print $4}' | awk -F . '{print $1}'`
+    lab=`echo $lab | awk -F _ '{a = $1;  b = $2; print a"_"b}'`
+    stim_arg="${stim_arg}-stim_times $s $stim $Rmodel "
+    stim_arg="${stim_arg}-stim_label $s $lab "
+    s=$(( s + 1 ))
+    
+done
+
+# concatenate motion params:
+for run in $runs
+do
+    cat $opath/motion_params/$run.demean.1D >> $opath/motion_params/moall.dm.1D
+done
+mot_par=$opath/motion_params/moall.dm.1D
+
+3dDeconvolve -input             \
+    $opath/st04.*.scal+orig.HEAD \
+    -mask $mask \
+    -ortvec $mot_par mot_demean                        \
+    -polort 3 -float                                           \
+    -jobs 12 \
+    -num_stimts 20 $stim_arg                                 \
+    -fout -tout -x1D $opath/X.allruns.xmat.1D -xjpeg $opath/X.allruns.jpg                 \
+    -fitts $opath/fitts.allruns                                         \
+    -errts $opath/errts.allruns                                       \
+    -bucket $out_fn
+
+
+3dbucket -prefix ${opath}/tstats_allruns ${opath}/stats.allruns.nii.gz'[2..59(3)]'
+
+
+
+
+# now clean everything up
 if [ $cleanup -eq 1 ]
 then
     bash cleanup_preproc.sh $subj $dropDataladData
